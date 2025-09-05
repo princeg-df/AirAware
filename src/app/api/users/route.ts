@@ -1,6 +1,11 @@
-import {NextRequest, NextResponse} from 'next/server';
-import pool from '@/lib/db';
+import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
+import { Op } from 'sequelize';
+import { users as User } from '@/models/users';
+import { initModels } from '@/models/init-models';
+import sequelize from '@/lib/sequelize';
+
+initModels(sequelize);
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,23 +15,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Username, email, and password are required' }, { status: 400 });
     }
 
-    // Hash the password
-    const saltRounds = 10;
-    const password_hash = await bcrypt.hash(password, saltRounds);
+    const existingUser = await User.findOne({
+      where: {
+        [Op.or]: [{ email }, { username }],
+      },
+    });
 
-    // Check if a user with the same email or username already exists
-    const existingUser = await pool.query('SELECT * FROM users WHERE email = $1 OR username = $2', [email, username]);
-
-    if (existingUser.rows.length > 0) {
+    if (existingUser) {
       return NextResponse.json({ message: 'A user with this email or username already exists.' }, { status: 409 });
     }
 
-    const newUser = await pool.query(
-      'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email, created_at',
-      [username, email, password_hash]
-    );
+    const saltRounds = 10;
+    const password_hash = await bcrypt.hash(password, saltRounds);
 
-    return NextResponse.json(newUser.rows[0], { status: 201 });
+    const newUser = await User.create({
+      username,
+      email,
+      password_hash,
+    });
+    
+    const { password_hash: _, ...userWithoutPassword } = newUser.get({ plain: true });
+
+    return NextResponse.json(userWithoutPassword, { status: 201 });
 
   } catch (error) {
     console.error('Error creating user:', error);
