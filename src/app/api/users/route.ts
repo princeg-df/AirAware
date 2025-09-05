@@ -1,5 +1,6 @@
 import {NextRequest, NextResponse} from 'next/server';
 import pool from '@/lib/db';
+import bcrypt from 'bcrypt';
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,8 +10,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Username, email, and password are required' }, { status: 400 });
     }
 
-    // In a real application, you would hash the password here before storing it.
-    const password_hash = password; // Storing plain text for now.
+    // Hash the password
+    const saltRounds = 10;
+    const password_hash = await bcrypt.hash(password, saltRounds);
 
     // Check if a user with the same email or username already exists
     const existingUser = await pool.query('SELECT * FROM users WHERE email = $1 OR username = $2', [email, username]);
