@@ -11,7 +11,7 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "db:setup": "tsx src/scripts/setup-db.ts",
-    "db:models": "sequelize-auto -o \"./src/models\" -d SchoolManagement -h \"192.168.1.3\" -u \"postgres\" -p 5433 -x \"mysecretpassword\" -e \"postgres\" --lang ts"
+    "db:models": "sequelize-auto -o \"./src/models\" -d AirAware -h \"192.168.1.11\" -u \"postgres\" -p 5433 -x \"mysecretpassword\" -e \"postgres\" --lang ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.609.0",
